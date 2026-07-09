@@ -100,13 +100,21 @@ product's default behavior.
 
 ## Install
 
-**Claude Code, global (all projects):**
+**One-liner (via [`skills`](https://www.npmjs.com/package/skills), works for Claude Code and other agents):**
+
+```bash
+npx skills add aka-luan/doc-cleanup
+```
+
+Run it inside a project for a per-project install, or add `-g` for global.
+
+**Manual, Claude Code global (all projects):**
 
 ```bash
 git clone https://github.com/aka-luan/doc-cleanup ~/.claude/skills/doc-cleanup
 ```
 
-**Claude Code, single project:**
+**Manual, Claude Code single project:**
 
 ```bash
 git clone https://github.com/aka-luan/doc-cleanup .claude/skills/doc-cleanup
