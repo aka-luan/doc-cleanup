@@ -111,17 +111,16 @@ Run it inside a project for a per-project install, or add `-g` for global.
 **Manual, Claude Code global (all projects):**
 
 ```bash
-git clone https://github.com/aka-luan/doc-cleanup ~/.claude/skills/doc-cleanup
+mkdir -p ~/.claude/skills/doc-cleanup
+curl -fsSL https://raw.githubusercontent.com/aka-luan/doc-cleanup/main/skills/doc-cleanup/SKILL.md \
+  -o ~/.claude/skills/doc-cleanup/SKILL.md
 ```
 
-**Manual, Claude Code single project:**
-
-```bash
-git clone https://github.com/aka-luan/doc-cleanup .claude/skills/doc-cleanup
-```
+**Manual, Claude Code single project:** same, into `.claude/skills/doc-cleanup/`.
 
 **Other harnesses:** it's one `SKILL.md` file with YAML frontmatter
-(`name` + `description`). Drop it wherever your agent discovers skills
+(`name` + `description`), living at `skills/doc-cleanup/SKILL.md` in this
+repo. Drop it wherever your agent discovers skills
 (e.g. `.agents/skills/doc-cleanup/`).
 
 ## Use
