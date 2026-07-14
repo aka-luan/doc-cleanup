@@ -84,19 +84,14 @@ Five phases, with a hard gate in the middle:
    against the code.
 3. **Report** — findings worst-first with concrete evidence. **Stops here for
    your approval. It never silently rewrites docs.**
-4. **Execute** — archive verbatim (diff-verified against `git HEAD`), rewrite
-   live docs to re-verified current facts, point at source-of-truth code
-   instead of duplicating values, banner drifted spec docs ("code wins"),
-   collapse done checklists, extract surviving traps from archived logs.
-5. **Verify & commit** — every relative link resolves, `git status` shows
-   only intended files, docs-only commit.
-
-The execute phase is deliberately delegable: the skill has the main agent
-write a self-contained spec of verified facts and hand the bulk rewriting to
-a cheaper model, then review the diff line-by-line. In the first run that
-review caught the subagent flattening "Premium *unlocks* manual moderation"
-into "moderation: manual" — a table cell that would have misstated the
-product's default behavior.
+4. **Execute** — preserve history in a verified archive when it needs to stay
+   conveniently discoverable (otherwise rely on Git), rewrite live docs to
+   re-verified current facts, point at source-of-truth code instead of
+   duplicating values, banner unresolved authority drift, collapse done
+   checklists, and preserve surviving traps.
+5. **Verify & hand off** — every relative link resolves, the diff contains
+   only approved Markdown changes, and a docs-only commit is offered rather
+   than created without authorization.
 
 ## Install
 
@@ -146,8 +141,8 @@ or just ask naturally — the skill triggers on things like:
 
 ## Philosophy
 
-- **Archive, don't delete.** History stays greppable in `docs/archive/`,
-  out of the context window.
+- **Preserve, don't destroy.** Keep history in a verified archive when it must
+  remain conveniently greppable; otherwise let Git history carry it.
 - **The repo is the evidence.** No fact gets written into a live doc without
   being re-verified against code at write time.
 - **Point, don't copy.** Docs should reference the constant/schema that owns

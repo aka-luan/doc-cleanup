@@ -1,93 +1,128 @@
 ---
 name: doc-cleanup
-description: Audit and clean a repo's markdown docs for agent-context rot — completed-work logs, executed plans never rewritten, stale facts, internal contradictions, dead paths. Use when the user asks to evaluate/clean up docs, says docs are "hurting agent thinking", mentions "doc debt", "stale docs", "docs cleanup", or when agent-entry docs (CLAUDE.md/AGENTS.md and their required reading) have grown fat with history.
+description: Audit and clean Markdown documentation for context rot. Use when docs may contain completed-work logs, executed plans, stale claims, contradictions, dead paths, or drifted authorities, especially in agent-required reading.
 ---
 
-# Doc cleanup — remove context rot from agent-facing docs
+# Doc cleanup
 
-Docs that agents must read every session are paid for in context tokens and,
-worse, in wrong conclusions: a stale fact in an "authoritative" doc beats a
-correct fact an agent never looks up. This skill audits, then archives history
-and rewrites live docs down to current facts.
+Remove context rot from Markdown without erasing load-bearing rules or useful
+history. Treat every doc claim as a hypothesis and the repository as evidence.
 
-**Two-phase contract: diagnose first, report findings, and only execute after
-the user approves.** Never silently rewrite docs.
+Work in two passes: diagnose and report without editing, then execute only after
+the user approves the proposed cleanup. Approval to edit does not imply approval
+to commit.
 
-## Phase 1 — Inventory
+## 1. Inventory the full scope
 
-1. `find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.git/*" | xargs wc -l | sort -rn`
-2. Read the agent-entry docs (`CLAUDE.md`, `AGENTS.md`, and every doc they
-   instruct agents to read before working). These cost context in *every*
-   session — weight them highest. A 400-line doc read once a month is cheap;
-   a 150-line doc on the "read before you code" list is expensive.
+Enumerate every in-scope `*.md` file, excluding generated, dependency, VCS, and
+user-excluded paths. Record each file's line count and role:
 
-## Phase 2 — Diagnose (read-only)
+- **entry**: `AGENTS.md`, `CLAUDE.md`, or equivalent
+- **required**: an entry doc instructs agents to read it
+- **reference**: consulted conditionally
+- **historical**: retained for lookup, not current guidance
 
-Hunt six rot patterns. For each hit, note file, lines, and severity.
+Follow the reading pointers in every entry doc. Weight findings by reading
+frequency: rot in required reading costs more than rot in an archive.
 
-1. **Completed-work logs.** Checklists that are ~all `[x]`, phase logs full of
-   ✅, implementation narratives, bug post-mortems, verification transcripts.
-   History belongs in git and archives, not in every session's context.
-2. **Executed plans never rewritten.** A plan/strategy doc whose steps all
-   shipped reads as *intent* but is consumed as *fact* — and its pre-decision
-   analysis (superseded tables, rejected options) actively misleads.
-3. **Internal contradictions.** A table "fixed" by a supersession note below
-   it instead of being edited; the same fact stated with two values in one
-   doc; stacked dated addenda where a later one reverses an earlier one.
-4. **Stale facts vs code.** Before flagging anything, **verify against the
-   code**: grep for referenced files, symbols, constants, and line refs. Doc
-   claims are hypotheses; the repo is the evidence. Typical finds: renamed
-   components, changed config values, wrong `file.ts:NN` refs, "awaiting
-   merge" statuses for work already on main (`git merge-base --is-ancestor`).
-5. **Dead paths.** Old OS paths after a machine migration, moved sibling
-   repos, deleted files, tooling that no longer exists.
-6. **Authority drift.** A doc crowned "source of truth" (design spec, API
-   contract) that the code has legitimately outgrown. Agents will "fix"
-   correct code back toward the stale spec.
+Inventory is complete when every in-scope Markdown file has a role and every
+entry-doc reading pointer is accounted for as resolved, dead, or external.
 
-Also mark what is **load-bearing and must survive**: hard rules, recurring
-traps/gotchas, do-not-do warnings, domain glossaries. Recurring traps are not
-history even when they were discovered historically.
+## 2. Diagnose without editing
 
-## Phase 3 — Report
+Read every in-scope doc deeply enough to test it for these rot patterns:
 
-Present findings worst-first, each with concrete evidence (quote the
-contradiction, show the failed grep). Rank by context cost × misdirection
-risk. Propose the cleanup plan and stop for approval.
+1. **Completed-work logs** — finished checklists, phase logs, implementation
+   narratives, post-mortems, and verification transcripts presented as live
+   guidance.
+2. **Executed plans** — shipped plans still written as intent, including
+   superseded analysis and rejected options.
+3. **Internal contradictions** — competing values, corrections below stale
+   tables, or dated addenda that reverse earlier guidance.
+4. **Stale claims** — references to renamed symbols, changed constants, wrong
+   line numbers, or work described as unmerged after it landed.
+5. **Dead paths** — missing files, obsolete machine paths, moved repositories,
+   or removed tools.
+6. **Authority drift** — a purported source of truth that no longer matches the
+   implemented behavior or a later authoritative decision.
 
-## Phase 4 — Execute (after approval)
+For each suspected hit, capture:
 
-Per-file playbook:
+- exact file and line location
+- the claim or content at issue
+- repository evidence from file lookup, search, configuration, tests, or Git
+  history
+- confidence and any unresolved ambiguity
+- the smallest safe disposition: keep, correct, condense, archive, or banner
 
-- **Archive, don't delete.** Copy the old doc (or extracted section) verbatim
-  to `docs/archive/<name>-<YYYY-MM>.md`. Verify verbatim:
-  `git show HEAD:<file> | diff - docs/archive/<name>.md`.
-- **Rewrite the live doc to current facts only**, with a one-line pointer to
-  the archive. Every fact you write must be re-verified against code at write
-  time — never copy a claim forward from the old doc.
-- **Point at sources of truth instead of duplicating them** (the config
-  constant, the schema file), so the doc can't drift again.
-- **Collapse done checklists** to one-line `✅` summaries; keep only open
-  items, with their original wording.
-- **Keep the traps.** Extract recurring gotchas from archived logs into the
-  live doc (short, imperative) before archiving the log.
-- **Banner superseded authorities** rather than rewriting them: a status
-  block at the top saying what drifted and that code + the deviation log win.
-- **Fix entry docs** (CLAUDE.md/AGENTS.md/README): dead paths, feature claims
-  for things that don't exist, missing pointers to the cleaned docs.
+Code proves implemented behavior, not necessarily intended behavior. When a doc
+may define the intended contract, report the mismatch as unresolved authority
+drift unless repository evidence establishes which authority superseded it.
 
-## Phase 5 — Verify & commit
+Mark load-bearing content that must survive: hard rules, active decisions,
+recurring traps, do-this guidance, and domain vocabulary. A trap remains current
+even when the story of discovering it is historical.
 
-- Every relative link in touched files resolves (including new archive files).
-- `git status` shows only the intended markdown files.
-- Docs-only commit; message lists what moved where and which contradictions
-  were fixed. Do not bundle code changes.
+Diagnosis is complete when every inventoried file is either represented by at
+least one evidence-backed finding or explicitly marked clean, and every factual
+finding has been checked against repository evidence.
 
-## Delegation
+## 3. Report and stop
 
-The execute phase is bulk clear-spec work — suitable for a cheaper model via
-subagent, with a self-contained spec listing every verified fact it needs (it
-must not re-derive facts). Diagnosis and the final diff review need judgment:
-do those in the main thread. Always review the subagent's diff line-by-line;
-expect to catch small semantic errors (e.g. "unlocks manual moderation"
-flattened to "moderation: manual").
+Present findings from highest to lowest `reading frequency × misdirection risk`.
+For each one, show the claim, evidence, consequence, and proposed disposition.
+Then give a per-file cleanup plan, list unresolved decisions separately, and
+state which load-bearing content will remain.
+
+Stop for approval. The diagnostic pass must leave the worktree unchanged.
+
+Reporting is complete when the user can approve, reject, or amend every proposed
+file change without additional investigation.
+
+## 4. Execute the approved plan
+
+Re-check each factual claim immediately before writing it. Apply only approved
+changes, using this per-file playbook:
+
+- **Archive history that must remain conveniently discoverable.** Put a verbatim
+  copy or clearly bounded extract in `docs/archive/` with a collision-resistant
+  source-and-date name. Record its source path and Git blob or content hash in
+  the cleanup report or a sidecar manifest, leaving verbatim content untouched.
+  Verify a full-file archive against the captured pre-edit source; verify an
+  extract against its recorded source bounds. Git history alone is sufficient
+  when discoverability does not justify a live archive.
+- **Rewrite live guidance as current facts.** Add a short archive pointer when
+  one was created. Derive every retained factual claim from current evidence,
+  rather than carrying it forward unchecked.
+- **Point to authorities.** Name the owning schema, configuration, or source file
+  instead of duplicating volatile values.
+- **Condense completed work.** Replace finished checklists with a short outcome;
+  preserve open items in their original wording.
+- **Preserve traps.** Turn recurring gotchas into short imperative guidance
+  before moving their historical narrative.
+- **Banner unresolved drift.** State the mismatch and the currently operative
+  authority; avoid silently rewriting a contract whose ownership is unclear.
+- **Repair entry docs.** Fix dead reading pointers and stale feature claims, and
+  keep the required-reading set minimal.
+
+Execution is complete when every approved finding has a corresponding diff or a
+documented reason no change was needed, and every retained factual claim touched
+by the rewrite has fresh evidence.
+
+## 5. Verify and hand off
+
+Verify that:
+
+- every relative link in each touched file resolves
+- full-file archives match their captured pre-edit sources byte-for-byte, and
+  extracts match their recorded source bounds
+- load-bearing content identified during diagnosis survives in live guidance
+- the diff contains only approved Markdown changes
+- no new contradiction was introduced across touched docs
+
+Report the changed files, archive mappings, corrected contradictions, unresolved
+authority decisions, and verification performed. Offer a docs-only commit with a
+specific message; create it only when the user authorizes the commit.
+
+The cleanup is complete when every approved finding is accounted for, all checks
+pass, and the user has a reviewable diff plus any remaining decisions.
